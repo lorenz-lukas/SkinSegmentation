@@ -10,13 +10,15 @@ def main():
     if(os.listdir(directory) == []):
         print('There is no image\n')
     else:
+        if(not os.listdir('SkinDataset/ORI')):
+            os.mkdir('SkinDataset/ORI/Luv')
         while(img != []):
             pic = cv.imread('SkinDataset/ORI/{}'.format(img[-1]))
             pic = cv.cvtColor(pic, cv.COLOR_BGR2Luv)#Luv
             cv.imshow('image',pic)
             cv.waitKey(1000)
             cv.destroyAllWindows()
-            cv.imwrite('SkinDataset/luv_{}'.format(img[-1]), pic)
+            cv.imwrite('SkinDataset/ORI/Luv/luv_{}'.format(img[-1]), pic)
             del img[-1]
 
 main()
