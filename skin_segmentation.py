@@ -10,9 +10,11 @@ def data(directory):
       exit(-1)
   else:
       return img
-def segmentation(img):
+def segmentation(img,name):
     gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
     ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
+    if thresh[0][0] == 1:
+        ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
     # noise removal
     kernel = np.ones((3,3),np.uint8)
     opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 2)
@@ -44,18 +46,22 @@ def segmentation(img):
     cv.imshow('skin',result)
     cv.waitKey(1000)
     cv.destroyAllWindows()
+    if(not os.walk('SkinDataset/ORI/Luv/')):
+            os.mkdir('SkinDataset/ORI/Luv/test/')
+    cv.imwrite('SkinDataset/ORI/Luv/test/{}'.format(name), result)
     return result
 
-def stistical_analysis(result,gt):
+def statistical_analysis(result,gt):
     true = 0
     false = 0
     white = 0
+    i = 0
     h,w = result.shape[:2]
-    for i in xrange(w):
-        for j in xrange(h):
-            if (result[j][i] == gt[i][j]):
+    for i in xrange(h):
+        for j in xrange(w):
+            if (result[i][j]/255 == gt[i][j].all() and gt[i][j].all() == 1):
                 true+=1
-            if (gt[j][i]==1):
+            if (gt[i][j].all()==1):
                 white+=1
     return true,(white - true)
 
@@ -63,10 +69,14 @@ def main():
     img_list = data(directory = 'SkinDataset/ORI/Luv/')
     gt_list = data(directory = 'SkinDataset/GT/Corrected')
     error = []
-    for i in img_list:
+    img_list_size = len(img_list)
+    for i in xrange(img_list_size):
         img = cv.imread('SkinDataset/ORI/Luv/{}'.format(img_list[-1]))
-        result = segmentation(img)
-        error.append(stistical_analysis(result,gt_list[-1]))
-        del data[-1],gt_list
+        gt = cv.imread('SkinDataset/GT/Corrected/{}'.format(gt_list[-1]))
+        result = segmentation(img,img_list[-1])
+        error.append(statistical_analysis(result,gt))
+        print error[-1][-2]/error[-1][-1]
+        del img_list[-1]
+        del gt_list[-1]
     print error
 main()
