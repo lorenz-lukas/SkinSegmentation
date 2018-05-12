@@ -1,0 +1,6 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Link to 
+Type=Link
+URL=file:///home/hugo/Documents/Tensorflow_tutorials/models/tutorials/image/cifar10/cifar10_multi_gpu_train.py
+Icon=text-x-python
