@@ -1,0 +1,5 @@
+*.tfrecords
+*.pyc
+Resnet_Code/Resnet_on_sfa/32_by_32_faces_train
+Resnet_Code/Resnet_on_sfa/Backup
+Resnet_Code/Resnet_on_sfa/Previous_attempts
