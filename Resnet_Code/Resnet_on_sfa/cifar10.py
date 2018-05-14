@@ -64,9 +64,9 @@ NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = cifar10_input.NUM_EXAMPLES_PER_EPOCH_FOR_EVAL
 
 # Constants describing the training process.
 MOVING_AVERAGE_DECAY = 0.9999     # The decay to use for the moving average.
-NUM_EPOCHS_PER_DECAY = 30.0      # Epochs after which learning rate decays.
-LEARNING_RATE_DECAY_FACTOR = 0.1  # Learning rate decay factor.
-INITIAL_LEARNING_RATE = 0.05     # Initial learning rate.
+NUM_EPOCHS_PER_DECAY = 15.0      # Epochs after which learning rate decays.
+LEARNING_RATE_DECAY_FACTOR = 0.3  # Learning rate decay factor.
+INITIAL_LEARNING_RATE = 0.01     # Initial learning rate.
 
 # If a model is trained with multiple GPUs, prefix all Op names with tower_name
 # to differentiate the operations. Note that this prefix is removed from the
@@ -201,8 +201,8 @@ def inference(images, is_train=False, should_summarize=True):
     # by replacing all instances of tf.get_variable() with tf.Variable().
     #
 
-    common_stdev = 2e-3
-    common_weight_decay = 5e-4
+    common_stdev = 5e-2
+    common_weight_decay = 5e-3
 
     initial_conv_feature_maps = 64
     initial_conv_type = 5
@@ -224,13 +224,21 @@ def inference(images, is_train=False, should_summarize=True):
 
 
     # conv layers weights
-    conv_weights=[64, 128, 256, 512]
-    conv_stdevs=[common_stdev] * 4
-    conv_weight_decays=[common_weight_decay] * 4
-    conv_types= [3]*4
-    dropout_rates=[0.9, 0.9, 0.7, 0.5]
-    pooling_layers=[False, True, True, True]
+    conv_weights=[64, 128, 256, 512, 512]
+    conv_stdevs=[common_stdev] * 5
+    conv_weight_decays=[common_weight_decay] * 5
+    conv_types= [3]*5
+    dropout_rates=[0.9, 0.9, 0.8, 0.7, 0.7]
+    pooling_layers=[False, True, True, True, False]
     input_tensors=[initial_conv_relu]
+
+    # conv_weights=[64, 128, 256, 256, 256]
+    # conv_stdevs=[common_stdev] * 5
+    # conv_weight_decays=[common_weight_decay] * 5
+    # conv_types= [3]*5
+    # dropout_rates=[0.9, 0.9, 0.8, 0.8, 0.8]
+    # pooling_layers=[False, True, True, False, False]
+    # input_tensors=[initial_conv_relu]    
 
     for i in xrange(len(conv_weights)):
         conv_type=conv_types[i]

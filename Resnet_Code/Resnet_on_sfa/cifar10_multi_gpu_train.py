@@ -84,6 +84,9 @@ tf.app.flags.DEFINE_integer('num_gpus', 2,
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
 
+tf.app.flags.DEFINE_string('best_dir', './best_dir',
+                            """Best eval dir.""")                            
+
 calculate_rates = True
 
 # INITIAL_IMAGE_SIZE = 150
@@ -152,8 +155,8 @@ def _parse_function(example_proto):
     image_decoded = tf.cond(contrast_percentage < 0.3,
                             lambda: image_contrast, lambda: image_decoded)
 
-    image_hue = tf.image.random_hue(image_decoded, max_delta=0.5)
-    image_decoded = tf.cond(hue_percentage < 0.1,
+    image_hue = tf.image.random_hue(image_decoded, max_delta=0.2)
+    image_decoded = tf.cond(hue_percentage < 0.5,
                             lambda: image_hue, lambda: image_decoded)
 
     image_saturation = tf.image.random_saturation(
@@ -169,7 +172,7 @@ def _parse_function(example_proto):
     image_zoom = tf.image.resize_images(image_decoded, new_size)
     image_zoom = tf.image.resize_image_with_crop_or_pad(
         image_zoom, INITIAL_IMAGE_SIZE, INITIAL_IMAGE_SIZE)
-    image_decoded = tf.cond(zoom_percentage < 0.4,
+    image_decoded = tf.cond(zoom_percentage < 0.1,
                             lambda: image_zoom, lambda: image_decoded)
 
     # skew_x_angle = tf.random_uniform(
@@ -364,11 +367,11 @@ def train():
         dataset = tf.data.TFRecordDataset(FLAGS.input_filename)
         # Parse the record into tensors.
         dataset = dataset.map(_parse_function)
+        dataset = dataset.shuffle(buffer_size=cifar10.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN)
         dataset = dataset.repeat()  # Repeat the input indefinitely.
         dataset = dataset.prefetch(FLAGS.batch_size * 7)
         dataset = dataset.batch(FLAGS.batch_size)
         iterator = dataset.make_initializable_iterator()
-        next_element = iterator.get_next()
 
         # GET TRAINING ACCURACY
         acc_dataset = tf.data.TFRecordDataset(FLAGS.input_filename)
@@ -377,7 +380,6 @@ def train():
         acc_dataset = acc_dataset.repeat()  # Repeat the input indefinitely.
         acc_dataset = acc_dataset.batch(FLAGS.batch_size)
         acc_iterator = acc_dataset.make_initializable_iterator()
-        acc_next_element = acc_iterator.get_next()
 
         eval_acc_dataset = tf.data.TFRecordDataset(FLAGS.eval_filename)
         # Parse the record into tensors.
@@ -386,7 +388,6 @@ def train():
         eval_acc_dataset = eval_acc_dataset.repeat()
         eval_acc_dataset = eval_acc_dataset.batch(FLAGS.batch_size)
         eval_acc_iterator = eval_acc_dataset.make_initializable_iterator()
-        eval_acc_next_element = eval_acc_iterator.get_next()
 
         # Calculate the gradients for each model tower.
         tower_grads = []
@@ -398,7 +399,7 @@ def train():
                     with tf.name_scope('%s_%d' % (cifar10.TOWER_NAME, i)) as scope:
                         # Dequeues one batch for the GPU
 
-                        image_batch, label_batch = next_element
+                        image_batch, label_batch = iterator.get_next()
 
                         # Calculate the loss for one tower of the CIFAR model. This function
                         # constructs the entire CIFAR model but shares the variables across
@@ -408,7 +409,7 @@ def train():
                         # Reuse variables for the next tower.
                         tf.get_variable_scope().reuse_variables()
 
-                        acc_images, acc_labels = acc_next_element
+                        acc_images, acc_labels = acc_iterator.get_next()
                         acc_logits = cifar10.inference(
                             acc_images, should_summarize=False)
                         acc_top_k_op_list.append(tf.nn.in_top_k(
@@ -416,7 +417,7 @@ def train():
                         tf.get_variable_scope().reuse_variables()
 
 
-                        eval_acc_images, eval_acc_labels = eval_acc_next_element
+                        eval_acc_images, eval_acc_labels = eval_acc_iterator.get_next()
                         eval_acc_logits = cifar10.inference(
                             eval_acc_images, should_summarize=False)
                         eval_acc_top_k_op_list.append(tf.nn.in_top_k(
@@ -507,6 +508,10 @@ def train():
         eval_acc_last_precision = 0.0
 
         # draw(sess, image_batch, label_batch)
+        # exit()
+
+
+        best_precision = 0.0
 
         for step in xrange(FLAGS.max_steps):
             start_time = time.time()
@@ -538,9 +543,9 @@ def train():
 
                 epoch = int(current_epoch)
 
-                format_str = ('%s: step: %d; epoch: %d; loss = %.6f, last_precision = %.2f, last_eval_precision =  %.2f  (%.1f examples/sec; %.3f '
+                format_str = ('%s: step: %d; epoch: %d; loss = %.6f, last_precision = %.2f, last_eval_precision =  %.2f, best_eval_precision =  %.2f  (%.1f examples/sec; %.3f '
                               'sec/batch)')
-                print (format_str % (datetime.now(), step, epoch, loss_value, acc_last_precision, eval_acc_last_precision,
+                print (format_str % (datetime.now(), step, epoch, loss_value, acc_last_precision, eval_acc_last_precision, best_precision,
                                      examples_per_sec, sec_per_batch))
 
             if step % 100 == 0:
@@ -553,13 +558,18 @@ def train():
                 checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
                 saver.save(sess, checkpoint_path, global_step=step)
 
-            if step % 15000 == 0 and calculate_rates:
+            if step % 15000 == 0 and calculate_rates and step > 0:
 
                 acc_last_precision = eval_once(
                     sess, summary_writer, acc_top_k_op, summary_op, acc_iterator, step, False, FLAGS.num_examples, current_lr, lr)
 
                 eval_acc_last_precision = eval_once(
                     sess, summary_writer, eval_acc_top_k_op, summary_op, eval_acc_iterator, step, True, FLAGS.eval_num_examples, current_lr, lr)
+
+                if eval_acc_last_precision > best_precision:
+                    best_precision = eval_acc_last_precision
+                    best_checkpoint_path = os.path.join(FLAGS.best_dir, 'model.ckpt')
+                    saver.save(sess, best_checkpoint_path, global_step=step)                    
 
 
 
@@ -572,6 +582,10 @@ def draw(sess, image_batch, label_batch):
     im, label = sess.run([image_batch, label_batch])
     shape = im.shape
     for i in xrange(shape[0]):
+
+        if label[i] == 0:
+            continue
+
         imagem = im[i, :, :, :]
 
         im_min = np.amin(imagem)
@@ -596,9 +610,14 @@ def draw(sess, image_batch, label_batch):
 
 def main(argv=None):  # pylint: disable=unused-argument
     # cifar10.maybe_download_and_extract()
-    # if tf.gfile.Exists(FLAGS.train_dir):
-    #   tf.gfile.DeleteRecursively(FLAGS.train_dir)
-    # tf.gfile.MakeDirs(FLAGS.train_dir)
+    if tf.gfile.Exists(FLAGS.train_dir):
+      tf.gfile.DeleteRecursively(FLAGS.train_dir)
+    tf.gfile.MakeDirs(FLAGS.train_dir)
+
+    if tf.gfile.Exists(FLAGS.best_dir):
+      tf.gfile.DeleteRecursively(FLAGS.best_dir)
+    tf.gfile.MakeDirs(FLAGS.best_dir)    
+
     train()
 
 

@@ -1,8 +1,11 @@
 import os
+import re
 
 import cv2
 import numpy as np
 
+
+jpg_pattern = re.compile('\w*\.jpg')
 
 minimum_connected_component_size = 500
 
@@ -26,19 +29,20 @@ def remove_small_connected_components(img):
     return img2
 
 
-gt_basefolder = '../SkinDataset/GT'
-ori_basefolder = '../SkinDataset/ORI'
+gt_basefolder = '../FullSkinDataset/GT'
+ori_basefolder = '../FullSkinDataset/ORI'
 
 out_basefolder = os.path.join(gt_basefolder,'Corrected')
 
 if not os.path.isdir(out_basefolder):
     os.mkdir(out_basefolder)
 
-train_filenames = ['11.jpg','24.jpg','44.jpg','83.jpg','331.jpg','429.jpg','789.jpg','841.jpg']
-test_filenames = ['243.jpg','278.jpg']
+
+all_files = os.listdir(ori_basefolder)
+filenames = [i for i in all_files if jpg_pattern.search(i) is not None]
 
 t_val = 9
-for filename in train_filenames:
+for filename in filenames:
     ori_filename = os.path.join(ori_basefolder,filename)
     gt_filename = os.path.join(gt_basefolder,filename)        
     ori_im = cv2.imread(ori_filename)
