@@ -1,0 +1,9 @@
+GT Corrigido
+
+Jaccard: 0.720
+Accuracy: 0.918
+
+GT Original
+
+Jaccard: 0.710
+Accuracy: 0.911

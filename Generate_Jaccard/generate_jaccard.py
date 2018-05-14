@@ -1,11 +1,16 @@
 import numpy as np
 import cv2
 import os
+import re
 
-gt_basefolder = '../FullSkinDataset/GT/Corrected'
-pred_basefolder = '.'
+jpg_pattern = re.compile('\w*\.jpg')
 
-filenames = [str(i) + '.jpg' for i in range(10) ]
+
+gt_basefolder = '../SkinDataset/GT/Binary'
+pred_basefolder = './Req_1_Early_Stopping'
+
+all_files = os.listdir(pred_basefolder)
+filenames = [i for i in all_files if jpg_pattern.search(i) is not None]
 
 filenames_gt = [os.path.join(gt_basefolder,k) for k in filenames]
 filenames_predictions = [os.path.join(pred_basefolder,k) for k in filenames]
@@ -22,8 +27,8 @@ for i in range(len(filenames_gt)):
     xor_arr = np.bitwise_xor(a,b)
     xnor_arr = 255 - xor_arr
 
-    jaccard = np.sum(and_arr)/np.sum(or_arr)
-    acc = np.sum(xnor_arr)/(a.shape[0]*a.shape[1])
+    jaccard = float(np.sum(and_arr!= 0))/np.sum(or_arr!= 0)
+    acc = float(np.sum(xnor_arr!= 0))/(a.shape[0]*a.shape[1])
 
     f_jac = f_jac + (jaccard/len(filenames_gt))
     f_acc = f_acc + (acc/len(filenames_gt))

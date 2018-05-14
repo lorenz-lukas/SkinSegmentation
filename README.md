@@ -9,6 +9,7 @@ PASTA
 correct_gt: códigos para correção do Ground Truth fornecido
 correct_gt/correct_gt.py: corrige o GT de arquivos com nome fornecido
 correct_gt/visualize_quality_of_corrected.py: visualiza GT corrigido
+correct_gt/generate_raw_gt.py: gera a versão binária do GT original
 
 PASTA
 FullSkinDataset: dataset completo, com GT original e corrigido

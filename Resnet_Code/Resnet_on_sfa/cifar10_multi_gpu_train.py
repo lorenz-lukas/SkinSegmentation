@@ -48,6 +48,8 @@ from PIL import Image
 
 import math
 
+from distutils.dir_util import copy_tree
+
 from tensorflow.python import debug as tf_debug
 
 import numpy as np
@@ -568,8 +570,11 @@ def train():
 
                 if eval_acc_last_precision > best_precision:
                     best_precision = eval_acc_last_precision
-                    best_checkpoint_path = os.path.join(FLAGS.best_dir, 'model.ckpt')
-                    saver.save(sess, best_checkpoint_path, global_step=step)                    
+                    if tf.gfile.Exists(FLAGS.best_dir):
+                        tf.gfile.DeleteRecursively(FLAGS.best_dir)
+                        tf.gfile.MakeDirs(FLAGS.best_dir) 
+                        copy_tree(FLAGS.train_dir,FLAGS.best_dir)                    
+
 
 
 
