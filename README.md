@@ -4,7 +4,9 @@
  - Python 2
  
  PS: a maioria dos arquivos da parte de Resnet foi adaptada de outro código, por isso os nomes dos arquivos e de muitas variáveis estão com "cifar10". Como a troca tornaria necessário debug até que todos os lugares se acertassem e o prazo era curto, preferiu-se por deixar assim.
- 
+
+## ***PRIMEIRO MÉTODO : RESNET***
+
 PASTA
 correct_gt: códigos para correção do Ground Truth fornecido
 correct_gt/correct_gt.py: corrige o GT de arquivos com nome fornecido
@@ -48,3 +50,9 @@ Resnet_on_full_dataset/Resnet_on_full_sfa: Arquivos operam de maneira semelhante
 
 PASTA
 SkinDataset: dataset reduzido para requisito 1, com GT original e corrigido
+
+## ***SEGUNDO MÉTODO : IMAGE PROCESSING***
+
+- Requisito 1
+
+- Requisito 2
