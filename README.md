@@ -53,6 +53,9 @@ SkinDataset: dataset reduzido para requisito 1, com GT original e corrigido
 
 ## ***SEGUNDO MÉTODO : IMAGE PROCESSING***
 
+Para instalar a biblioteca sktlearning:
+```sudo apt-get install python-sklearn -y```
+
 - Requisito 1
 
 - Requisito 2
