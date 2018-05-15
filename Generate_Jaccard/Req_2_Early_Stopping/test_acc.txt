@@ -1,0 +1,17 @@
+On random from all test set
+
+0.969
+
+On full 10 examples
+
+0.973
+
+On corrected dataset
+
+Jaccard: 0.868
+Accuracy: 0.974
+
+On raw dataset
+
+Jaccard: 0.849
+Accuracy: 0.969

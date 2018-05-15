@@ -9,8 +9,7 @@ jpg_pattern = re.compile('\w*\.jpg')
 
 
 
-gt_basefolder = '../SkinDataset/GT'
-ori_basefolder = '../SkinDataset/ORI'
+gt_basefolder = '../FullSkinDataset/GT'
 
 out_basefolder = os.path.join(gt_basefolder,'Binary')
 
@@ -23,16 +22,12 @@ filenames = [i for i in all_files if jpg_pattern.search(i) is not None]
 
 t_val = 0
 for filename in filenames:
-    ori_filename = os.path.join(ori_basefolder,filename)
     gt_filename = os.path.join(gt_basefolder,filename)        
-    ori_im = cv2.imread(ori_filename)
-    gt_im = cv2.imread(gt_filename)
-    gray_gt = cv2.cvtColor(gt_im, cv2.COLOR_BGR2GRAY)
+    gray_gt = cv2.imread(gt_filename, cv2.IMREAD_GRAYSCALE)
 
     bin_im = np.copy(gray_gt)
-    neg_im = np.copy(ori_im)
-    for i in range(ori_im.shape[0]):
-        for j in range(ori_im.shape[1]):
+    for i in range(gray_gt.shape[0]):
+        for j in range(gray_gt.shape[1]):
             norm = gray_gt[i,j]
             if norm > t_val:
                 bin_im[i,j] = 255

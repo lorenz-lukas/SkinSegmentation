@@ -6,8 +6,8 @@ import re
 jpg_pattern = re.compile('\w*\.jpg')
 
 
-gt_basefolder = '../SkinDataset/GT/Binary'
-pred_basefolder = './Req_1_Early_Stopping'
+gt_basefolder = '../FullSkinDataset/GT/Binary'
+pred_basefolder = './Req_2_Early_Stopping'
 
 all_files = os.listdir(pred_basefolder)
 filenames = [i for i in all_files if jpg_pattern.search(i) is not None]
