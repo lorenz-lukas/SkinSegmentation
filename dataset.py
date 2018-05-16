@@ -18,7 +18,7 @@ def main():
             cv.imshow('image',pic)
             cv.waitKey(1000)
             cv.destroyAllWindows()
-            cv.imwrite('SkinDataset/ORI/Luv/luv_{}'.format(img[-1]), pic)
+            cv.imwrite('SkinDataset/ORI/Luv/{}'.format(img[-1]), pic)
             del img[-1]
 
 main()

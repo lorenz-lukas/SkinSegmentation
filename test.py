@@ -21,19 +21,21 @@ def segmentation(img,name):
         ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
     # noise removal
     kernel = np.ones((3,3),np.uint8)
-    opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 2)
+    opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 5)
     # sure background area
     sure_bg = cv.dilate(opening,kernel,iterations=3)
     # Finding sure foreground area
     dist_transform = cv.distanceTransform(opening,cv.DIST_L2,5)
-    ret, sure_fg = cv.threshold(dist_transform,0.9*dist_transform.max(),255,0)
+    ret, sure_fg = cv.threshold(dist_transform,0.7*dist_transform.max(),255,0)
     # Finding unknown region
     sure_fg = np.uint8(sure_fg)
     unknown = cv.subtract(sure_bg,sure_fg)
-    cv.imshow('skin',unknown)
+    
+    cv.imshow('Watershed',unknown)
     cv.waitKey(1000)
     cv.destroyAllWindows()
-    ## BAckground removal
+    
+    ## Background subtraction
     mask = np.zeros(img.shape[:2],np.uint8)
     bgdModel = np.zeros((1,65),np.float64)
     fgdModel = np.zeros((1,65),np.float64)
@@ -41,15 +43,15 @@ def segmentation(img,name):
     cv.grabCut(img,mask,rect,bgdModel,fgdModel,5,cv.GC_INIT_WITH_RECT)
     mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
     img = img*mask2[:,:,np.newaxis]
-    gray = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
+    gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
     ret, img = cv.threshold(gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
 
-    cv.imshow('skin',img)
+    cv.imshow('Background',img)
     cv.waitKey(1000)
     cv.destroyAllWindows()
 
-    result = cv.bitwise_and(img,unknown, mask=None)
-    cv.imshow('skin',result)
+    result = cv.bitwise_and(img,unknown)
+    cv.imshow('Result',result)
     cv.waitKey(1000)
     cv.destroyAllWindows()
     if(not os.walk('SkinDataset/ORI/Luv/')):
@@ -78,7 +80,7 @@ def statistical_analysis(result,gt):
     return jac, ac
 
 def jaccard(result,gt):
-    gray = cv.cvtColor(gt,cv.COLOR_RGB2GRAY)
+    gray = cv.cvtColor(gt,cv.COLOR_BGR2GRAY)
     ret, gt = cv.threshold(gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
     if(np.sum(np.array(cv.bitwise_or(result, gt, mask=None))) != 0 ):
         j = float(np.sum(cv.bitwise_and(result, gt, mask=None)))/float(np.sum(cv.bitwise_or(result, gt, mask=None)))
@@ -96,23 +98,11 @@ def main():
     print "###################################################"
     print ("\n\nWait a second while the errors is being computed\n")
 
-    img_list = data(directory = 'SkinDataset/ORI/Luv')
-    gt_list = data(directory = 'SkinDataset/GT/Corrected')
-    jaccard_index = []
-    accuracy_percentage = []
-    img_list_size = len(img_list)
-
-    for i in xrange(img_list_size):
-        img = cv.imread('SkinDataset/ORI/Luv/{}'.format(img_list[-1]))
-        gt = cv.imread('SkinDataset/GT/Corrected/{}'.format(gt_list[-1]))
-        result = segmentation(img,img_list[-1])
-        j,a = statistical_analysis(result,gt)
-        jaccard_index.append(j)
-        accuracy_percentage.append(a)
-        j = 0,a = 0
-        del img_list[-1]
-        del gt_list[-1]
+    img = cv.imread('SkinDataset/ORI/Luv/429.jpg')
+    gt = cv.imread('SkinDataset/GT/Corrected/429.jpg')
+    result = segmentation(img,'44.jpg' )
+    jaccard_index,a = statistical_analysis(result,gt)
     print "\n\nMean jaccard:"
-    print np.mean(jaccard_index)
-    print np.std(jaccard_index)
+    print jaccard_index
+
 main()
