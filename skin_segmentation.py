@@ -12,7 +12,7 @@ def data(directory):
   else:
       return img
 
-def segmentation(img,name):
+def segmentation(img,name,gt):
     ## Watershed transformation
     gray = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
     ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
@@ -34,28 +34,31 @@ def segmentation(img,name):
     cv.waitKey(1000)
     cv.destroyAllWindows()
     ## BAckground removal
-    mask = np.zeros(img.shape[:2],np.uint8)
-    bgdModel = np.zeros((1,65),np.float64)
-    fgdModel = np.zeros((1,65),np.float64)
-    rect = (40,40,400,600)
-    cv.grabCut(img,mask,rect,bgdModel,fgdModel,5,cv.GC_INIT_WITH_RECT)
-    mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
-    img = img*mask2[:,:,np.newaxis]
-    gray = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
-    ret, img = cv.threshold(gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
+    if(jaccard(unknown,gt) < 50):
+        mask = np.zeros(img.shape[:2],np.uint8)
+        bgdModel = np.zeros((1,65),np.float64)
+        fgdModel = np.zeros((1,65),np.float64)
+        rect = (40,40,400,600)
+        cv.grabCut(img,mask,rect,bgdModel,fgdModel,5,cv.GC_INIT_WITH_RECT)
+        mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
+        img = img*mask2[:,:,np.newaxis]
+        gray = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
+        ret, img = cv.threshold(gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
 
-    cv.imshow('skin',img)
-    cv.waitKey(1000)
-    cv.destroyAllWindows()
+        cv.imshow('skin',img)
+        cv.waitKey(1000)
+        cv.destroyAllWindows()
 
-    result = cv.bitwise_and(img,unknown, mask=None)
-    cv.imshow('skin',result)
-    cv.waitKey(1000)
-    cv.destroyAllWindows()
-    if(not os.walk('SkinDataset/ORI/Luv/')):
-            os.mkdir('SkinDataset/ORI/Luv/test/')
-    cv.imwrite('SkinDataset/ORI/Luv/test/{}'.format(name), result)
-    return result
+        result = cv.bitwise_and(img,unknown, mask=None)
+        cv.imshow('skin',result)
+        cv.waitKey(1000)
+        cv.destroyAllWindows()
+        if(not os.walk('SkinDataset/ORI/Luv/')):
+                os.mkdir('SkinDataset/ORI/Luv/test/')
+        cv.imwrite('SkinDataset/ORI/Luv/test/{}'.format(name), result)
+        return result
+    else:
+        return unknown
 
 def statistical_analysis(result,gt):
     true = 0
@@ -101,17 +104,17 @@ def main():
     jaccard_index = []
     accuracy_percentage = []
     img_list_size = len(img_list)
-
     for i in xrange(img_list_size):
         img = cv.imread('SkinDataset/ORI/Luv/{}'.format(img_list[-1]))
-        gt = cv.imread('SkinDataset/GT/Corrected/{}'.format(gt_list[-1]))
-        result = segmentation(img,img_list[-1])
+        gt = cv.imread('SkinDataset/GT/Corrected/{}'.format(img_list[-1]))
+        result = segmentation(img,img_list[-1],gt)
         j,a = statistical_analysis(result,gt)
         jaccard_index.append(j)
         accuracy_percentage.append(a)
-        j = 0,a = 0
+        j = 0
+        a = 0
         del img_list[-1]
-        del gt_list[-1]
+        #del gt_list[-1]
     print "\n\nMean jaccard:"
     print np.mean(jaccard_index)
     print np.std(jaccard_index)

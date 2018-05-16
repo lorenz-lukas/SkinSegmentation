@@ -30,11 +30,11 @@ def segmentation(img,name):
     # Finding unknown region
     sure_fg = np.uint8(sure_fg)
     unknown = cv.subtract(sure_bg,sure_fg)
-    
+
     cv.imshow('Watershed',unknown)
     cv.waitKey(1000)
     cv.destroyAllWindows()
-    
+
     ## Background subtraction
     mask = np.zeros(img.shape[:2],np.uint8)
     bgdModel = np.zeros((1,65),np.float64)
@@ -98,9 +98,9 @@ def main():
     print "###################################################"
     print ("\n\nWait a second while the errors is being computed\n")
 
-    img = cv.imread('SkinDataset/ORI/Luv/429.jpg')
-    gt = cv.imread('SkinDataset/GT/Corrected/429.jpg')
-    result = segmentation(img,'44.jpg' )
+    img = cv.imread('SkinDataset/ORI/Luv/789.jpg')
+    gt = cv.imread('SkinDataset/GT/Corrected/789.jpg')
+    result = segmentation(img,'789.jpg' )
     jaccard_index,a = statistical_analysis(result,gt)
     print "\n\nMean jaccard:"
     print jaccard_index
