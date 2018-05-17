@@ -54,13 +54,16 @@ def segmentation(img,name,gt):
         cv.waitKey(1000)
         cv.destroyAllWindows()
         if(not os.walk('SkinDataset/ORI/Luv/')):
-                os.mkdir('SkinDataset/ORI/Luv/test/')
-        cv.imwrite('SkinDataset/ORI/Luv/test/{}'.format(name), result)
+                os.mkdir('SkinDataset/ORI/Luv/results/')
+        cv.imwrite('SkinDataset/ORI/Luv/results/{}'.format(name), result)
         return result
     else:
+        if(not os.walk('SkinDataset/ORI/Luv/')):
+                os.mkdir('SkinDataset/ORI/Luv/results/')
+        cv.imwrite('SkinDataset/ORI/Luv/results/{}'.format(name), unknown)
         return unknown
 
-def statistical_analysis(result,gt):
+def statistical_analysis(result,gt,name):
     true = 0
     false = 0
     white = 0
@@ -74,9 +77,9 @@ def statistical_analysis(result,gt):
                 white+=1
     jac = jaccard(result,gt)
     ac = accuracy(white,true)
-    print "\nJaccard Index value:"
+    print "\nJaccard Index value:  "+name
     print jac
-    print "\nAccuracy value:"
+    print "\nAccuracy value:       "+name
     print ac
     return jac, ac
 
@@ -99,23 +102,25 @@ def main():
     print "###################################################"
     print ("\n\nWait a second while the errors is being computed\n")
 
-    img_list = data(directory = 'SkinDataset/ORI/Luv')
-    gt_list = data(directory = 'SkinDataset/GT/Corrected')
+    #img_list = data(directory = 'SkinDataset/ORI/Luv')
+    img_list = ['243.jpg','278.jpg']
     jaccard_index = []
     accuracy_percentage = []
     img_list_size = len(img_list)
     for i in xrange(img_list_size):
         img = cv.imread('SkinDataset/ORI/Luv/{}'.format(img_list[-1]))
-        gt = cv.imread('SkinDataset/GT/Corrected/{}'.format(img_list[-1]))
+        gt = cv.imread('SkinDataset/GT/{}'.format(img_list[-1]))
         result = segmentation(img,img_list[-1],gt)
-        j,a = statistical_analysis(result,gt)
+        j,a = statistical_analysis(result,gt,img_list[-1])
         jaccard_index.append(j)
         accuracy_percentage.append(a)
         j = 0
         a = 0
         del img_list[-1]
-        #del gt_list[-1]
     print "\n\nMean jaccard:"
     print np.mean(jaccard_index)
     print np.std(jaccard_index)
+    print "\n\nMean Accuracy:"
+    print np.mean(accuracy_percentage)
+    print np.std(accuracy_percentage)
 main()

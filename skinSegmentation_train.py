@@ -14,11 +14,11 @@ def data(directory):
 
 def segmentation(img,name,gt):
     ## Watershed transformation
-    gray2 = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
-    ret, thresh = cv.threshold(gray2,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
+    gray = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
+    ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
 
     if thresh[364][256] == 0 and thresh[354][256] == 0 and thresh[374][256] == 0:
-        ret, thresh = cv.threshold(gray2,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+        ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
     # noise removal
     kernel = np.ones((3,3),np.uint8)
     opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 2)
@@ -30,11 +30,11 @@ def segmentation(img,name,gt):
     # Finding unknown region
     sure_fg = np.uint8(sure_fg)
     unknown = cv.subtract(sure_bg,sure_fg)
-    cv.imshow('skin',unknown)
-    cv.waitKey(1000)
-    cv.destroyAllWindows()
+    #cv.imshow('skin',unknown)
+    #cv.waitKey(1000)
+    #cv.destroyAllWindows()
     ## BAckground removal
-    if(jaccard(unknown,gt) < 30):
+    if(jaccard(unknown,gt) < 50):
         mask = np.zeros(img.shape[:2],np.uint8)
         bgdModel = np.zeros((1,65),np.float64)
         fgdModel = np.zeros((1,65),np.float64)
@@ -45,41 +45,25 @@ def segmentation(img,name,gt):
         gray = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
         ret, img = cv.threshold(gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
 
-        cv.imshow('skin',img)
-        cv.waitKey(1000)
-        cv.destroyAllWindows()
+        #cv.imshow('skin',img)
+        #cv.waitKey(1000)
+        #cv.destroyAllWindows()
 
         result = cv.bitwise_and(img,unknown, mask=None)
-        cv.imshow('skin',result)
-        cv.waitKey(1000)
-        cv.destroyAllWindows()
+        #cv.imshow('skin',result)
+        #cv.waitKey(1000)
+        #cv.destroyAllWindows()
         if(not os.walk('SkinDataset/ORI/Luv/')):
-                os.mkdir('SkinDataset/ORI/Luv/test/')
-        cv.imwrite('SkinDataset/ORI/Luv/test/{}'.format(name), result)
-        if(jaccard(unknown,gt) < 40):
-            img = cv.imread('SkinDataset/ORI/{}'.format(name))
-            cv.imshow('skin',img)
-            cv.waitKey(1000)
-            cv.destroyAllWindows()
-            print img[5][250]
-            h,w = img.shape[:2]
-            for i in xrange(h):
-                for j in xrange(w):
-                    if np.mean(img[i][j]) < 200:
-                        result[i][j] = 1
-                    else:
-                        result[i][j] = 0
-            cv.imshow('skin',result)
-            cv.waitKey(1000)
-            cv.destroyAllWindows()
+                os.mkdir('SkinDataset/ORI/Luv/results/')
+        cv.imwrite('SkinDataset/ORI/Luv/results/{}'.format(name), result)
         return result
     else:
         if(not os.walk('SkinDataset/ORI/Luv/')):
-                os.mkdir('SkinDataset/ORI/Luv/test/')
-        cv.imwrite('SkinDataset/ORI/Luv/test/{}'.format(name), unknown)
+                os.mkdir('SkinDataset/ORI/Luv/results/')
+        cv.imwrite('SkinDataset/ORI/Luv/results/{}'.format(name), unknown)
         return unknown
 
-def statistical_analysis(result,gt):
+def statistical_analysis(result,gt,name):
     true = 0
     false = 0
     white = 0
@@ -93,14 +77,14 @@ def statistical_analysis(result,gt):
                 white+=1
     jac = jaccard(result,gt)
     ac = accuracy(white,true)
-    print "\nJaccard Index value:"
+    print "\nJaccard Index value:  "+name
     print jac
-    print "\nAccuracy value:"
+    print "\nAccuracy value:       "+name
     print ac
     return jac, ac
 
 def jaccard(result,gt):
-    gray = cv.cvtColor(gt,cv.COLOR_BGR2GRAY)
+    gray = cv.cvtColor(gt,cv.COLOR_RGB2GRAY)
     ret, gt = cv.threshold(gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
     if(np.sum(np.array(cv.bitwise_or(result, gt, mask=None))) != 0 ):
         j = float(np.sum(cv.bitwise_and(result, gt, mask=None)))/float(np.sum(cv.bitwise_or(result, gt, mask=None)))
@@ -118,11 +102,27 @@ def main():
     print "###################################################"
     print ("\n\nWait a second while the errors is being computed\n")
 
-    img = cv.imread('SkinDataset/ORI/Luv/429.jpg')
-    gt = cv.imread('SkinDataset/GT/Corrected/429.jpg')
-    result = segmentation(img,'429.jpg',gt)
-    jaccard_index,a = statistical_analysis(result,gt)
+    img_list = data(directory = 'SkinDataset/ORI/Luv')
+    test_list = ['243.jpg','278.jpg']
+    jaccard_index = []
+    accuracy_percentage = []
+    img_list_size = len(img_list)
+    for i in xrange(img_list_size):
+        if(img_list[-1] != test_list[-1] and img_list[-1] != test_list[-2]):
+            img = cv.imread('SkinDataset/ORI/Luv/{}'.format(img_list[-1]))
+            print img.shape
+            gt = cv.imread('SkinDataset/GT/{}'.format(img_list[-1]))
+            result = segmentation(img,img_list[-1],gt)
+            j,a = statistical_analysis(result,gt,img_list[-1])
+            jaccard_index.append(j)
+            accuracy_percentage.append(a)
+            j = 0
+            a = 0
+        del img_list[-1]
     print "\n\nMean jaccard:"
-    print jaccard_index
-
+    print np.mean(jaccard_index)
+    print np.std(jaccard_index)
+    print "\n\nMean Accuracy:"
+    print np.mean(accuracy_percentage)
+    print np.std(accuracy_percentage)
 main()
