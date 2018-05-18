@@ -53,9 +53,12 @@ SkinDataset: dataset reduzido para requisito 1, com GT original e corrigido
 
 ## ***SEGUNDO MÉTODO : IMAGE PROCESSING***
 
-Para instalar a biblioteca sktlearning:
-```sudo apt-get install python-sklearn -y```
+Precisa-se obedecer a árvore de diretórios correspondente aos programas do primeiro requisito e do segundo resuisito, ou seja:
 
-- Requisito 1
+-> Primeiro requisito:
 
-- Requisito 2
+Consiste nos programas 'SkinSegmentation_train.py' e 'SkinSegmentation_val.py', onde aquele é para traino e o outro pra validação. A estrutura de diretórios é a pertinenete ao SkinDataset, onde se precisa manter a sequência Skindataset/ORI/Luv e Skindataset/ORI.
+
+-> Segundo requisito:
+
+Consiste nos programas 'fullSkinSegmentation_train.py' e 'fullSkinSegmentation_val.py', onde aquele é para treino e test e este para validação. A strutura de diretórios é a pertinente ao FullSkinDataset.
